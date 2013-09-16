@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"  xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="*" Name="damienbod power shell example" Language="1033" Version="1.0.1.3" Manufacturer="damienbod" UpgradeCode="e4a5f44e-2fef-4abf-9e28-211f556abd3a">
+    <Package Id="*" InstallerVersion="305" InstallScope="perMachine" Compressed="yes" />
+
+    <MediaTemplate />
+
+    <Property Id="INSTALLPATH">C:\damienbod</Property>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id='ProgramFilesFolder' Name='PFiles'>
+        <Directory Id='damienbod' Name='damienbod'>
+          <Directory Id='INSTALLPATH' Name='SimpleConsoleApp' >
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id='INSTALLPATH'>
+      <Directory Id='INSTALLDIR_SimpleConsoleApp' Name='SimpleConsoleApp' />
+      <Directory Id='INSTALLDIR_ExternalDirectory' Name='ExternalDirectory' />
+    </DirectoryRef>
+
+
+    <Feature Id="ProductFeature" Title="PowerShellInstaller" Level="1">
+      <ComponentGroupRef Id="SimpleConsoleAppGroup" />
+      <ComponentRef Id="SimpleConsoleAppRef" />
+      <ComponentRef Id="ExternalDirectoryRef" />
+    </Feature>
+
+    <Component Id='SimpleConsoleAppRef' Guid='1bb847ef-912a-49b0-9e32-7788e2b5a6c6' Feature='ProductFeature' Directory='INSTALLDIR_SimpleConsoleApp'>
+      <CreateFolder />
+    </Component>
+
+    <Component Id='ExternalDirectoryRef' Guid='1bb847ef-912a-49b0-9e32-7788e2b5a6c7' Feature='ProductFeature' Directory='INSTALLDIR_ExternalDirectory'>
+      <CreateFolder />
+    </Component>
+
+    <!-- My custom actions  install scripts-->
+    <CustomAction Id="RegisterPSCmd"
+							Property="RegisterPowerShellProperty"
+							Value="&quot;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NonInteractive -InputFormat None -NoProfile -File &quot;C:\damienbod\SimpleConsoleApp\CreateDirectoryAndFilesInstall.ps1&quot; &quot;arg_that_I_maybe_require_for_my_script&quot;"
+							Execute="immediate" />
+
+    <CustomAction Id="RegisterPSCmdUninstall"
+							Property="RegisterPowerShellPropertyUninstall"
+							Value="&quot;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NonInteractive -InputFormat None -NoProfile -File &quot;C:\damienbod\SimpleConsoleApp\CreateDirectoryAndFilesUninstall.ps1&quot; &quot;arg_that_I_maybe_require_for_my_unistallscript&quot;"
+							Execute="immediate" />
+
+    <CustomAction Id="RegisterPowerShellProperty"
+									BinaryKey="WixCA"
+									DllEntry="CAQuietExec64"
+									Execute="deferred"
+									Return="check"
+									Impersonate="no" />
+
+    <CustomAction Id="RegisterPowerShellPropertyUninstall"
+									BinaryKey="WixCA"
+									DllEntry="CAQuietExec64"
+									Execute="deferred"
+									Return="check"
+									Impersonate="no" />
+    
+    <InstallExecuteSequence>
+      <Custom Action="RegisterPSCmd" After="CostFinalize">NOT  Installed</Custom>
+      <Custom Action="RegisterPowerShellProperty" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action='RegisterPSCmdUninstall' Before='CostInitialize'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+      <Custom Action='RegisterPowerShellPropertyUninstall' Before='RemoveFiles'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+    </InstallExecuteSequence>
+    
+    
+    <MajorUpgrade Schedule="afterInstallInitialize" AllowDowngrades="no" DowngradeErrorMessage="ok" AllowSameVersionUpgrades="yes" />
+
+  </Product>
+</Wix>
+
